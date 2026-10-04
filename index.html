@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Video Portal</title>
+  <style>
+    :root {
+      --bg: #0f172a; --card: #1e293b; --card-hover: #334155;
+      --accent: #38bdf8; --text: #f8fafc; --muted: #94a3b8;
+      --border: #334155; --green: #10b981;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); display: flex; height: 100vh; overflow: hidden; }
+    
+    /* Sidebar */
+    .sidebar { width: 240px; background: var(--card); border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; }
+    .brand { padding: 20px; border-bottom: 1px solid var(--border); }
+    .brand h1 { font-size: 1.1rem; }
+    .brand p { font-size: 0.75rem; color: var(--muted); margin-top: 2px; }
+    .nav { padding: 12px; display: flex; flex-direction: column; gap: 4px; flex: 1; }
+    .nav-btn {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 10px 12px; background: none; border: 1px solid transparent;
+      border-radius: 6px; color: var(--muted); font-size: 0.9rem; cursor: pointer; text-align: left;
+    }
+    .nav-btn:hover { background: rgba(255,255,255,0.05); color: var(--text); }
+    .nav-btn.active { background: rgba(56,189,248,0.15); border-color: rgba(56,189,248,0.3); color: var(--accent); font-weight: 600; }
+    .badge { font-size: 0.75rem; background: var(--border); padding: 2px 6px; border-radius: 10px; color: var(--muted); }
+    .nav-btn.active .badge { background: var(--accent); color: var(--bg); font-weight: 700; }
+    .sidebar-footer { padding: 16px; border-top: 1px solid var(--border); font-size: 0.8rem; color: var(--muted); }
+    .progress-bar { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; margin-top: 6px; }
+    .progress-fill { height: 100%; background: var(--green); width: 0%; transition: width 0.3s; }
+
+    /* Main Area */
+    .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+    .header { padding: 14px 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    input[type="text"] { background: var(--card); border: 1px solid var(--border); color: var(--text); padding: 8px 12px; border-radius: 6px; font-size: 0.85rem; outline: none; }
+    input[type="text"]:focus { border-color: var(--accent); }
+    .btn-group { display: flex; background: var(--card); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+    .filter-btn { background: none; border: none; padding: 6px 12px; color: var(--muted); cursor: pointer; font-size: 0.8rem; }
+    .filter-btn.active { background: var(--border); color: var(--text); font-weight: 600; }
+    .sort-btn { background: var(--card); border: 1px solid var(--border); color: var(--text); padding: 6px 12px; border-radius: 6px; font-size: 0.8rem; cursor: pointer; }
+
+    /* Video Grid */
+    .grid-wrap { flex: 1; padding: 24px; overflow-y: auto; }
+    .video-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; display: flex; flex-direction: column; cursor: pointer; transition: transform 0.15s, border-color 0.15s; }
+    .card:hover { transform: translateY(-2px); border-color: var(--accent); }
+    .card.watched { opacity: 0.7; }
+    .card.watched:hover { opacity: 1; }
+    .thumb { position: relative; width: 100%; padding-top: 56.25%; background: #000; }
+    .thumb img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+    .watched-tag { position: absolute; top: 8px; right: 8px; background: var(--green); color: #fff; font-size: 0.7rem; font-weight: bold; padding: 2px 6px; border-radius: 4px; }
+    .card-info { padding: 12px; display: flex; flex-direction: column; flex: 1; }
+    .meta { display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--muted); margin-bottom: 6px; }
+    .meta .ch-name { font-weight: 600; color: var(--accent); }
+    .video-title { font-size: 0.9rem; font-weight: 600; line-height: 1.35; margin-bottom: 10px; flex: 1; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .actions { display: flex; justify-content: flex-end; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 8px; }
+    .watch-btn { background: none; border: none; color: var(--muted); font-size: 0.75rem; cursor: pointer; }
+    .watch-btn:hover { color: var(--text); }
+    .watch-btn.is-done { color: var(--green); font-weight: bold; }
+
+    /* Modal Player */
+    .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; z-index: 100; padding: 20px; }
+    .modal.active { display: flex; }
+    .modal-box { width: 100%; max-width: 900px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+    .modal-bar { padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
+    .modal-title { font-size: 0.95rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 12px; }
+    .close-btn { background: none; border: none; color: var(--muted); font-size: 1.4rem; cursor: pointer; line-height: 1; }
+    .iframe-box { position: relative; width: 100%; padding-top: 56.25%; background: #000; }
+    .iframe-box iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: none; }
+    .msg { text-align: center; padding: 60px 20px; color: var(--muted); font-size: 0.95rem; }
+  </style>
+</head>
+<body>
+
+  <aside class="sidebar">
+    <div class="brand">
+      <h1>🎬 Video Hub</h1>
+      <p>Approved Science & Making</p>
+    </div>
+    <nav class="nav">
+      <button class="nav-btn active" data-ch="all">
+        <span>🌟 All Channels</span>
+        <span class="badge" id="b-all">0</span>
+      </button>
+      <button class="nav-btn" data-ch="Veritasium">
+        <span>🔬 Veritasium</span>
+        <span class="badge" id="b-veritasium">0</span>
+      </button>
+      <button class="nav-btn" data-ch="Mark Rober">
+        <span>🚀 Mark Rober</span>
+        <span class="badge" id="b-rober">0</span>
+      </button>
+    </nav>
+    <div class="sidebar-footer">
+      <div style="display:flex; justify-content:space-between;">
+        <span>Watched</span>
+        <span id="stat-watched">0 / 0</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="stat-bar"></div></div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="header">
+      <h2 id="view-title">All Channels</h2>
+      <div class="controls">
+        <input type="text" id="search" placeholder="Search videos...">
+        <div class="btn-group">
+          <button class="filter-btn active" data-f="all">All</button>
+          <button class="filter-btn" data-f="unwatched">Unwatched</button>
+          <button class="filter-btn" data-f="watched">Watched</button>
+        </div>
+        <button class="sort-btn" id="sort-btn">Sort: <strong>Newest First</strong></button>
+      </div>
+    </header>
+
+    <div class="grid-wrap">
+      <div class="video-grid" id="grid">
+        <div class="msg">Loading videos from Google Sheet...</div>
+      </div>
+    </div>
+  </main>
+
+  <div class="modal" id="modal">
+    <div class="modal-box">
+      <div class="modal-bar">
+        <div class="modal-title" id="m-title">Playing Video</div>
+        <button class="close-btn" id="m-close">&times;</button>
+      </div>
+      <div class="iframe-box">
+        <iframe id="m-frame" src="" allowfullscreen allow="autoplay; encrypted-media"></iframe>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const SHEET_ID = "1MoK36TeB2cJdvPOPASvOnBX_XRwKcYeuiwzxnU2hMcY";
+    const CHANNELS = ["Veritasium", "Mark Rober"];
+
+    let videos = [];
+    let activeCh = "all";
+    let activeFilter = "all";
+    let sortDesc = true;
+    let watched = new Set(JSON.parse(localStorage.getItem("watched_videos") || "[]"));
+
+    function parseCSV(text) {
+      const rows = [];
+      let row = [], field = '', inQuotes = false;
+      for (let i = 0; i < text.length; i++) {
+        const c = text[i], next = text[i+1];
+        if (c === '"') {
+          if (inQuotes && next === '"') { field += '"'; i++; }
+          else inQuotes = !inQuotes;
+        } else if (c === ',' && !inQuotes) {
+          row.push(field.trim()); field = '';
+        } else if ((c === '\r' || c === '\n') && !inQuotes) {
+          if (c === '\r' && next === '\n') i++;
+          row.push(field.trim());
+          if (row.some(f => f.length > 0)) rows.push(row);
+          row = []; field = '';
+        } else { field += c; }
+      }
+      if (field || row.length) { row.push(field.trim()); if (row.some(f => f.length > 0)) rows.push(row); }
+      return rows;
+    }
+
+    async function loadData() {
+      videos = [];
+      try {
+        for (const ch of CHANNELS) {
+          const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(ch)}`;
+          const res = await fetch(url);
+          if (!res.ok) throw new Error("Could not fetch sheet data.");
+          const text = await res.text();
+          const rows = parseCSV(text);
+          for (let i = 1; i < rows.length; i++) {
+            const r = rows[i];
+            if (!r[1] || r[1].toLowerCase() === "video id") continue;
+            videos.push({
+              channel: ch,
+              title: r[0] || "Untitled",
+              id: r[1],
+              date: r[2] || "2026-01-01"
+            });
+          }
+        }
+        updateStats();
+        render();
+      } catch (e) {
+        document.getElementById("grid").innerHTML = `<div class="msg">Unable to load videos. Make sure the Google Sheet is shared with "Anyone with the link can view".</div>`;
+      }
+    }
+
+    function updateStats() {
+      document.getElementById("b-all").textContent = videos.length;
+      document.getElementById("b-veritasium").textContent = videos.filter(v => v.channel === "Veritasium").length;
+      document.getElementById("b-rober").textContent = videos.filter(v => v.channel === "Mark Rober").length;
+      const count = videos.filter(v => watched.has(v.id)).length;
+      document.getElementById("stat-watched").textContent = `${count} / ${videos.length}`;
+      document.getElementById("stat-bar").style.width = videos.length ? `${(count / videos.length) * 100}%` : "0%";
+    }
+
+    function toggleWatch(id, e) {
+      if (e) e.stopPropagation();
+      watched.has(id) ? watched.delete(id) : watched.add(id);
+      localStorage.setItem("watched_videos", JSON.stringify([...watched]));
+      updateStats();
+      render();
+    }
+
+    function playVideo(id, title) {
+      document.getElementById("m-title").textContent = title;
+      document.getElementById("m-frame").src = `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0`;
+      document.getElementById("modal").classList.add("active");
+      if (!watched.has(id)) {
+        watched.add(id);
+        localStorage.setItem("watched_videos", JSON.stringify([...watched]));
+        updateStats();
+        render();
+      }
+    }
+
+    function closeModal() {
+      document.getElementById("modal").classList.remove("active");
+      document.getElementById("m-frame").src = "";
+    }
+
+    function render() {
+      const q = document.getElementById("search").value.toLowerCase().trim();
+      let list = videos.filter(v => {
+        if (activeCh !== "all" && v.channel !== activeCh) return false;
+        const isW = watched.has(v.id);
+        if (activeFilter === "watched" && !isW) return false;
+        if (activeFilter === "unwatched" && isW) return false;
+        if (q && !v.title.toLowerCase().includes(q)) return false;
+        return true;
+      });
+
+      list.sort((a, b) => sortDesc ? b.date.localeCompare(a.date) : a.date.localeCompare(b.date));
+
+      const grid = document.getElementById("grid");
+      if (!list.length) {
+        grid.innerHTML = `<div class="msg">No videos found.</div>`;
+        return;
+      }
+
+      grid.innerHTML = list.map(v => {
+        const isW = watched.has(v.id);
+        return `
+          <div class="card ${isW ? 'watched' : ''}" onclick="playVideo('${v.id}', '${v.title.replace(/'/g, "\\'")}')">
+            <div class="thumb">
+              <img src="https://img.youtube.com/vi/${v.id}/hqdefault.jpg" loading="lazy" alt="">
+              ${isW ? '<div class="watched-tag">✓ Watched</div>' : ''}
+            </div>
+            <div class="card-info">
+              <div class="meta">
+                <span class="ch-name">${v.channel}</span>
+                <span>${v.date}</span>
+              </div>
+              <div class="video-title">${v.title}</div>
+              <div class="actions">
+                <button class="watch-btn ${isW ? 'is-done' : ''}" onclick="toggleWatch('${v.id}', event)">
+                  ${isW ? '✓ Watched' : 'Mark as Watched'}
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    document.querySelectorAll(".nav-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        activeCh = btn.dataset.ch;
+        document.getElementById("view-title").textContent = btn.querySelector("span").textContent.trim();
+        render();
+      });
+    });
+
+    document.querySelectorAll(".filter-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        activeFilter = btn.dataset.f;
+        render();
+      });
+    });
+
+    document.getElementById("search").addEventListener("input", render);
+    document.getElementById("sort-btn").addEventListener("click", () => {
+      sortDesc = !sortDesc;
+      document.getElementById("sort-btn").querySelector("strong").textContent = sortDesc ? "Newest First" : "Oldest First";
+      render();
+    });
+
+    document.getElementById("m-close").addEventListener("click", closeModal);
+    document.getElementById("modal").addEventListener("click", e => { if (e.target.id === "modal") closeModal(); });
+    document.addEventListener("keydown", e => { if (e.key === "Escape") closeModal(); });
+
+    loadData();
+  </script>
+</body>
