@@ -8,7 +8,7 @@
     :root {
       --bg: #0f172a; --card: #1e293b; --card-hover: #334155;
       --accent: #38bdf8; --text: #f8fafc; --muted: #94a3b8;
-      --border: #334155; --green: #10b981;
+      --border: #334155; --green: #10b981; --warn: #f59e0b;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); display: flex; height: 100vh; overflow: hidden; }
@@ -28,9 +28,14 @@
     .nav-btn.active { background: rgba(56,189,248,0.15); border-color: rgba(56,189,248,0.3); color: var(--accent); font-weight: 600; }
     .badge { font-size: 0.75rem; background: var(--border); padding: 2px 6px; border-radius: 10px; color: var(--muted); }
     .nav-btn.active .badge { background: var(--accent); color: var(--bg); font-weight: 700; }
+    
     .sidebar-footer { padding: 16px; border-top: 1px solid var(--border); font-size: 0.8rem; color: var(--muted); }
-    .progress-bar { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; margin-top: 6px; }
+    .progress-bar { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; margin-top: 6px; margin-bottom: 12px; }
     .progress-fill { height: 100%; background: var(--green); width: 0%; transition: width 0.3s; }
+    .lock-status-badge { display: flex; align-items: center; justify-content: space-between; font-size: 0.75rem; color: var(--muted); }
+    .status-pill { padding: 2px 8px; border-radius: 10px; font-weight: bold; }
+    .status-pill.open { background: rgba(16,185,129,0.2); color: var(--green); }
+    .status-pill.locked { background: rgba(245,158,11,0.2); color: var(--warn); }
 
     /* Main Area */
     .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
@@ -41,7 +46,8 @@
     .btn-group { display: flex; background: var(--card); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
     .filter-btn { background: none; border: none; padding: 6px 12px; color: var(--muted); cursor: pointer; font-size: 0.8rem; }
     .filter-btn.active { background: var(--border); color: var(--text); font-weight: 600; }
-    .sort-btn { background: var(--card); border: 1px solid var(--border); color: var(--text); padding: 6px 12px; border-radius: 6px; font-size: 0.8rem; cursor: pointer; }
+    .sort-btn, .parent-btn { background: var(--card); border: 1px solid var(--border); color: var(--text); padding: 6px 12px; border-radius: 6px; font-size: 0.8rem; cursor: pointer; }
+    .parent-btn { color: var(--accent); }
 
     /* Video Grid */
     .grid-wrap { flex: 1; padding: 24px; overflow-y: auto; }
@@ -53,6 +59,8 @@
     .thumb { position: relative; width: 100%; padding-top: 56.25%; background: #000; }
     .thumb img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
     .watched-tag { position: absolute; top: 8px; right: 8px; background: var(--green); color: #fff; font-size: 0.7rem; font-weight: bold; padding: 2px 6px; border-radius: 4px; }
+    .lock-overlay { position: absolute; top: 8px; left: 8px; background: rgba(15,23,42,0.85); color: var(--warn); font-size: 0.75rem; font-weight: 600; padding: 3px 8px; border-radius: 6px; display: flex; align-items: center; gap: 4px; border: 1px solid var(--border); }
+    
     .card-info { padding: 12px; display: flex; flex-direction: column; flex: 1; }
     .meta { display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--muted); margin-bottom: 6px; }
     .meta .ch-name { font-weight: 600; color: var(--accent); }
@@ -62,7 +70,7 @@
     .watch-btn:hover { color: var(--text); }
     .watch-btn.is-done { color: var(--green); font-weight: bold; }
 
-    /* Modal Player */
+    /* Modals */
     .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; z-index: 100; padding: 20px; }
     .modal.active { display: flex; }
     .modal-box { width: 100%; max-width: 900px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
@@ -71,6 +79,21 @@
     .close-btn { background: none; border: none; color: var(--muted); font-size: 1.4rem; cursor: pointer; line-height: 1; }
     .iframe-box { position: relative; width: 100%; padding-top: 56.25%; background: #000; }
     .iframe-box iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: none; }
+    
+    /* Lock Notice Dialog */
+    .lock-dialog { max-width: 440px; padding: 28px; text-align: center; }
+    .lock-icon { font-size: 2.6rem; margin-bottom: 14px; }
+    .lock-dialog h3 { font-size: 1.25rem; margin-bottom: 10px; color: var(--text); }
+    .lock-dialog p.prompt-msg { font-size: 1.05rem; font-weight: 600; color: var(--accent); margin-bottom: 12px; line-height: 1.4; }
+    .lock-dialog p.sub-msg { font-size: 0.85rem; color: var(--muted); margin-bottom: 22px; }
+    .pin-section { border-top: 1px solid var(--border); padding-top: 18px; text-align: left; }
+    .pin-label { font-size: 0.8rem; color: var(--muted); margin-bottom: 6px; display: block; }
+    .pin-row { display: flex; gap: 8px; }
+    .pin-input { flex: 1; background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 8px 12px; border-radius: 6px; font-size: 1rem; text-align: center; letter-spacing: 4px; outline: none; }
+    .pin-submit { background: var(--border); border: none; color: var(--text); padding: 8px 14px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; cursor: pointer; }
+    .pin-submit:hover { background: var(--accent); color: var(--bg); }
+    .pin-error { color: #f87171; font-size: 0.8rem; margin-top: 6px; display: none; }
+
     .msg { text-align: center; padding: 60px 20px; color: var(--muted); font-size: 0.95rem; }
   </style>
 </head>
@@ -79,7 +102,7 @@
   <aside class="sidebar">
     <div class="brand">
       <h1>🎬 Video Hub</h1>
-      <p>Approved Science & Making</p>
+      <p>Approved Channels</p>
     </div>
     <nav class="nav">
       <button class="nav-btn active" data-ch="all">
@@ -94,6 +117,14 @@
         <span>🚀 Mark Rober</span>
         <span class="badge" id="b-rober">0</span>
       </button>
+      <button class="nav-btn" data-ch="Nick DiGiovanni">
+        <span>🍳 Nick DiGiovanni</span>
+        <span class="badge" id="b-nick">0</span>
+      </button>
+      <button class="nav-btn" data-ch="CrunchLabs">
+        <span>⚙️ CrunchLabs</span>
+        <span class="badge" id="b-crunchlabs">0</span>
+      </button>
     </nav>
     <div class="sidebar-footer">
       <div style="display:flex; justify-content:space-between;">
@@ -101,6 +132,10 @@
         <span id="stat-watched">0 / 0</span>
       </div>
       <div class="progress-bar"><div class="progress-fill" id="stat-bar"></div></div>
+      <div class="lock-status-badge">
+        <span>Access:</span>
+        <span class="status-pill open" id="access-pill">Checking...</span>
+      </div>
     </div>
   </aside>
 
@@ -115,6 +150,7 @@
           <button class="filter-btn" data-f="watched">Watched</button>
         </div>
         <button class="sort-btn" id="sort-btn">Sort: <strong>Newest First</strong></button>
+        <button class="parent-btn" id="open-pin-btn">🔑 Parent Unlock</button>
       </div>
     </header>
 
@@ -125,6 +161,7 @@
     </div>
   </main>
 
+  <!-- Video Player Modal -->
   <div class="modal" id="modal">
     <div class="modal-box">
       <div class="modal-bar">
@@ -137,11 +174,35 @@
     </div>
   </div>
 
+  <!-- Lock Notice & PIN Modal -->
+  <div class="modal" id="lock-modal">
+    <div class="modal-box lock-dialog">
+      <div class="lock-icon">🔒</div>
+      <h3>Playback Restricted</h3>
+      <p class="prompt-msg" id="lock-msg">Were you useful today? Homework done? Let Aba know :-)</p>
+      <p class="sub-msg" id="lock-sub">Ask Aba to unlock videos for you or enter the PIN below.</p>
+      
+      <div class="pin-section">
+        <label class="pin-label">Parent PIN (1-Hour Pass):</label>
+        <div class="pin-row">
+          <input type="password" class="pin-input" id="pin-input" maxlength="8" placeholder="••••">
+          <button class="pin-submit" id="pin-submit">Unlock</button>
+        </div>
+        <div class="pin-error" id="pin-error">Incorrect PIN. Try again.</div>
+      </div>
+      
+      <div style="margin-top: 16px;">
+        <button class="watch-btn" id="close-lock-btn">Close</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     const SHEET_ID = "1MoK36TeB2cJdvPOPASvOnBX_XRwKcYeuiwzxnU2hMcY";
-    const CHANNELS = ["Veritasium", "Mark Rober"];
+    const CHANNELS = ["Veritasium", "Mark Rober", "Nick DiGiovanni", "CrunchLabs"];
 
     let videos = [];
+    let settings = {};
     let activeCh = "all";
     let activeFilter = "all";
     let sortDesc = true;
@@ -168,7 +229,67 @@
       return rows;
     }
 
+    async function loadSettings() {
+      try {
+        const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=Settings`;
+        const res = await fetch(url);
+        if (res.ok) {
+          const text = await res.text();
+          const rows = parseCSV(text);
+          for (let i = 1; i < rows.length; i++) {
+            if (rows[i][0]) {
+              settings[rows[i][0].trim()] = rows[i][1] ? rows[i][1].trim() : '';
+            }
+          }
+        }
+      } catch (e) {
+        console.warn("Could not load Settings tab, using defaults", e);
+      }
+    }
+
+    function checkLockStatus() {
+      // 1. Check local temporary unlock
+      const unlockUntil = localStorage.getItem("parent_unlock_until");
+      if (unlockUntil && Date.now() < parseInt(unlockUntil)) {
+        return { locked: false, reason: "Parent Override Active" };
+      }
+
+      const master = (settings["Master Status"] || "SCHEDULED").toUpperCase();
+      if (master === "UNLOCKED") return { locked: false };
+      if (master === "LOCKED") return { locked: true, reason: settings["Lock Message"] || "Were you useful today? Homework done? Let Aba know :-)" };
+
+      // 2. Scheduled by Day of Week
+      const now = new Date();
+      const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+      const dayName = days[now.getDay()];
+      const timeWindow = settings[dayName];
+
+      if (!timeWindow || timeWindow.toUpperCase() === "OFF") {
+        return { locked: true, reason: `No viewing hours scheduled for ${dayName}.` };
+      }
+
+      const parts = timeWindow.split("-");
+      if (parts.length === 2) {
+        const [startH, startM] = parts[0].split(":").map(Number);
+        const [endH, endM] = parts[1].split(":").map(Number);
+        const curMins = now.getHours() * 60 + now.getMinutes();
+        const startMins = startH * 60 + (startM || 0);
+        const endMins = endH * 60 + (endM || 0);
+
+        if (curMins >= startMins && curMins < endMins) {
+          return { locked: false };
+        } else {
+          return { locked: true, reason: `Viewing hours for ${dayName} are ${parts[0]} - ${parts[1]}.` };
+        }
+      }
+
+      return { locked: false };
+    }
+
     async function loadData() {
+      await loadSettings();
+      updateAccessPill();
+
       videos = [];
       try {
         for (const ch of CHANNELS) {
@@ -195,10 +316,24 @@
       }
     }
 
+    function updateAccessPill() {
+      const lock = checkLockStatus();
+      const pill = document.getElementById("access-pill");
+      if (lock.locked) {
+        pill.textContent = "Locked 🔒";
+        pill.className = "status-pill locked";
+      } else {
+        pill.textContent = "Open ✓";
+        pill.className = "status-pill open";
+      }
+    }
+
     function updateStats() {
       document.getElementById("b-all").textContent = videos.length;
       document.getElementById("b-veritasium").textContent = videos.filter(v => v.channel === "Veritasium").length;
       document.getElementById("b-rober").textContent = videos.filter(v => v.channel === "Mark Rober").length;
+      document.getElementById("b-nick").textContent = videos.filter(v => v.channel === "Nick DiGiovanni").length;
+      document.getElementById("b-crunchlabs").textContent = videos.filter(v => v.channel === "CrunchLabs").length;
       const count = videos.filter(v => watched.has(v.id)).length;
       document.getElementById("stat-watched").textContent = `${count} / ${videos.length}`;
       document.getElementById("stat-bar").style.width = videos.length ? `${(count / videos.length) * 100}%` : "0%";
@@ -213,6 +348,12 @@
     }
 
     function playVideo(id, title) {
+      const lock = checkLockStatus();
+      if (lock.locked) {
+        openLockModal(lock.reason);
+        return;
+      }
+
       document.getElementById("m-title").textContent = title;
       document.getElementById("m-frame").src = `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0`;
       document.getElementById("modal").classList.add("active");
@@ -224,6 +365,36 @@
       }
     }
 
+    function openLockModal(subText) {
+      const modal = document.getElementById("lock-modal");
+      const customPrompt = settings["Lock Message"] || "Were you useful today? Homework done? Let Aba know :-)";
+      document.getElementById("lock-msg").textContent = customPrompt;
+      if (subText && subText !== customPrompt) {
+        document.getElementById("lock-sub").textContent = subText + " Ask Aba to unlock.";
+      } else {
+        document.getElementById("lock-sub").textContent = "Ask Aba to unlock videos for you or enter the PIN below.";
+      }
+
+      document.getElementById("pin-error").style.display = "none";
+      document.getElementById("pin-input").value = "";
+      modal.classList.add("active");
+    }
+
+    function submitPin() {
+      const input = document.getElementById("pin-input").value.trim();
+      const validPin = (settings["Parent PIN"] || "1234").trim();
+
+      if (input === validPin) {
+        // Grant 60 minutes unlock
+        localStorage.setItem("parent_unlock_until", Date.now() + 60 * 60 * 1000);
+        document.getElementById("lock-modal").classList.remove("active");
+        updateAccessPill();
+        render();
+      } else {
+        document.getElementById("pin-error").style.display = "block";
+      }
+    }
+
     function closeModal() {
       document.getElementById("modal").classList.remove("active");
       document.getElementById("m-frame").src = "";
@@ -231,6 +402,8 @@
 
     function render() {
       const q = document.getElementById("search").value.toLowerCase().trim();
+      const lock = checkLockStatus();
+
       let list = videos.filter(v => {
         if (activeCh !== "all" && v.channel !== activeCh) return false;
         const isW = watched.has(v.id);
@@ -254,6 +427,7 @@
           <div class="card ${isW ? 'watched' : ''}" onclick="playVideo('${v.id}', '${v.title.replace(/'/g, "\\'")}')">
             <div class="thumb">
               <img src="https://img.youtube.com/vi/${v.id}/hqdefault.jpg" loading="lazy" alt="">
+              ${lock.locked ? '<div class="lock-overlay">🔒 Locked</div>' : ''}
               ${isW ? '<div class="watched-tag">✓ Watched</div>' : ''}
             </div>
             <div class="card-info">
@@ -299,10 +473,17 @@
       render();
     });
 
+    document.getElementById("open-pin-btn").addEventListener("click", () => openLockModal());
+    document.getElementById("pin-submit").addEventListener("click", submitPin);
+    document.getElementById("pin-input").addEventListener("keydown", (e) => { if (e.key === "Enter") submitPin(); });
+    document.getElementById("close-lock-btn").addEventListener("click", () => document.getElementById("lock-modal").classList.remove("active"));
+
     document.getElementById("m-close").addEventListener("click", closeModal);
     document.getElementById("modal").addEventListener("click", e => { if (e.target.id === "modal") closeModal(); });
-    document.addEventListener("keydown", e => { if (e.key === "Escape") closeModal(); });
+    document.getElementById("lock-modal").addEventListener("click", e => { if (e.target.id === "lock-modal") document.getElementById("lock-modal").classList.remove("active"); });
+    document.addEventListener("keydown", e => { if (e.key === "Escape") { closeModal(); document.getElementById("lock-modal").classList.remove("active"); } });
 
     loadData();
   </script>
 </body>
+</html>
