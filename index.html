@@ -49,10 +49,44 @@
     .sort-btn, .parent-btn { background: var(--card); border: 1px solid var(--border); color: var(--text); padding: 6px 12px; border-radius: 6px; font-size: 0.8rem; cursor: pointer; }
     .parent-btn { color: var(--accent); }
 
-    /* Video Grid */
-    .grid-wrap { flex: 1; padding: 24px; overflow-y: auto; }
+    /* Video Wrap & Year Sections */
+    .grid-wrap { flex: 1; padding: 24px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; }
+    
+    .year-section {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .year-header {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 20px;
+      background: rgba(255, 255, 255, 0.02);
+      border: none;
+      color: var(--text);
+      cursor: pointer;
+      font-size: 1.05rem;
+      font-weight: 700;
+      transition: background 0.15s;
+    }
+    .year-header:hover { background: rgba(255, 255, 255, 0.05); }
+    .year-title-group { display: flex; align-items: center; gap: 10px; }
+    .year-title { color: var(--accent); font-size: 1.1rem; }
+    .year-count { font-size: 0.78rem; font-weight: 500; color: var(--muted); background: var(--border); padding: 2px 8px; border-radius: 10px; }
+    .year-chevron { font-size: 0.8rem; color: var(--muted); transition: transform 0.2s ease; }
+    .year-section.collapsed .year-chevron { transform: rotate(-90deg); }
+    .year-section.collapsed .year-content { display: none; }
+    
+    .year-content {
+      padding: 20px;
+      border-top: 1px solid var(--border);
+    }
+
     .video-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
-    .card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; display: flex; flex-direction: column; cursor: pointer; transition: transform 0.15s, border-color 0.15s; }
+    .card { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; display: flex; flex-direction: column; cursor: pointer; transition: transform 0.15s, border-color 0.15s; }
     .card:hover { transform: translateY(-2px); border-color: var(--accent); }
     .card.watched { opacity: 0.7; }
     .card.watched:hover { opacity: 1; }
@@ -154,10 +188,8 @@
       </div>
     </header>
 
-    <div class="grid-wrap">
-      <div class="video-grid" id="grid">
-        <div class="msg">Loading videos from Google Sheet...</div>
-      </div>
+    <div class="grid-wrap" id="main-wrap">
+      <div class="msg">Loading videos from Google Sheet...</div>
     </div>
   </main>
 
@@ -208,6 +240,10 @@
     let sortDesc = true;
     let watched = new Set(JSON.parse(localStorage.getItem("watched_videos") || "[]"));
 
+    // Track open year sections. Current year starts open; older years start collapsed.
+    const currentCalendarYear = new Date().getFullYear().toString();
+    let openYears = new Set([currentCalendarYear]);
+
     function parseCSV(text) {
       const rows = [];
       let row = [], field = '', inQuotes = false;
@@ -248,7 +284,6 @@
     }
 
     function checkLockStatus() {
-      // 1. Check local temporary unlock
       const unlockUntil = localStorage.getItem("parent_unlock_until");
       if (unlockUntil && Date.now() < parseInt(unlockUntil)) {
         return { locked: false, reason: "Parent Override Active" };
@@ -258,7 +293,6 @@
       if (master === "UNLOCKED") return { locked: false };
       if (master === "LOCKED") return { locked: true, reason: settings["Lock Message"] || "Were you useful today? Homework done? Let Aba know :-)" };
 
-      // 2. Scheduled by Day of Week
       const now = new Date();
       const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
       const dayName = days[now.getDay()];
@@ -301,18 +335,22 @@
           for (let i = 1; i < rows.length; i++) {
             const r = rows[i];
             if (!r[1] || r[1].toLowerCase() === "video id") continue;
+            const rawDate = r[2] || "2026-01-01";
+            const yearMatch = rawDate.match(/^\d{4}/);
+            const year = yearMatch ? yearMatch[0] : "Earlier";
             videos.push({
               channel: ch,
               title: r[0] || "Untitled",
               id: r[1],
-              date: r[2] || "2026-01-01"
+              date: rawDate,
+              year: year
             });
           }
         }
         updateStats();
         render();
       } catch (e) {
-        document.getElementById("grid").innerHTML = `<div class="msg">Unable to load videos. Make sure the Google Sheet is shared with "Anyone with the link can view".</div>`;
+        document.getElementById("main-wrap").innerHTML = `<div class="msg">Unable to load videos. Make sure the Google Sheet is shared with "Anyone with the link can view".</div>`;
       }
     }
 
@@ -385,7 +423,6 @@
       const validPin = (settings["Parent PIN"] || "1234").trim();
 
       if (input === validPin) {
-        // Grant 60 minutes unlock
         localStorage.setItem("parent_unlock_until", Date.now() + 60 * 60 * 1000);
         document.getElementById("lock-modal").classList.remove("active");
         updateAccessPill();
@@ -398,6 +435,15 @@
     function closeModal() {
       document.getElementById("modal").classList.remove("active");
       document.getElementById("m-frame").src = "";
+    }
+
+    function toggleYear(year) {
+      if (openYears.has(year)) {
+        openYears.delete(year);
+      } else {
+        openYears.add(year);
+      }
+      render();
     }
 
     function render() {
@@ -415,34 +461,65 @@
 
       list.sort((a, b) => sortDesc ? b.date.localeCompare(a.date) : a.date.localeCompare(b.date));
 
-      const grid = document.getElementById("grid");
+      const mainWrap = document.getElementById("main-wrap");
       if (!list.length) {
-        grid.innerHTML = `<div class="msg">No videos found.</div>`;
+        mainWrap.innerHTML = `<div class="msg">No videos found.</div>`;
         return;
       }
 
-      grid.innerHTML = list.map(v => {
-        const isW = watched.has(v.id);
+      // Group by year
+      const yearGroups = {};
+      list.forEach(v => {
+        if (!yearGroups[v.year]) yearGroups[v.year] = [];
+        yearGroups[v.year].push(v);
+      });
+
+      const sortedYears = Object.keys(yearGroups).sort((a, b) => sortDesc ? b.localeCompare(a) : a.localeCompare(b));
+
+      mainWrap.innerHTML = sortedYears.map(year => {
+        const isOpen = q.length > 0 || openYears.has(year);
+        const vids = yearGroups[year];
+
+        const cardsHtml = vids.map(v => {
+          const isW = watched.has(v.id);
+          return `
+            <div class="card ${isW ? 'watched' : ''}" onclick="playVideo('${v.id}', '${v.title.replace(/'/g, "\\'")}')">
+              <div class="thumb">
+                <img src="https://img.youtube.com/vi/${v.id}/hqdefault.jpg" loading="lazy" alt="">
+                ${lock.locked ? '<div class="lock-overlay">🔒 Locked</div>' : ''}
+                ${isW ? '<div class="watched-tag">✓ Watched</div>' : ''}
+              </div>
+              <div class="card-info">
+                <div class="meta">
+                  <span class="ch-name">${v.channel}</span>
+                  <span>${v.date}</span>
+                </div>
+                <div class="video-title">${v.title}</div>
+                <div class="actions">
+                  <button class="watch-btn ${isW ? 'is-done' : ''}" onclick="toggleWatch('${v.id}', event)">
+                    ${isW ? '✓ Watched' : 'Mark as Watched'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+
         return `
-          <div class="card ${isW ? 'watched' : ''}" onclick="playVideo('${v.id}', '${v.title.replace(/'/g, "\\'")}')">
-            <div class="thumb">
-              <img src="https://img.youtube.com/vi/${v.id}/hqdefault.jpg" loading="lazy" alt="">
-              ${lock.locked ? '<div class="lock-overlay">🔒 Locked</div>' : ''}
-              ${isW ? '<div class="watched-tag">✓ Watched</div>' : ''}
-            </div>
-            <div class="card-info">
-              <div class="meta">
-                <span class="ch-name">${v.channel}</span>
-                <span>${v.date}</span>
+          <section class="year-section ${isOpen ? '' : 'collapsed'}">
+            <button class="year-header" onclick="toggleYear('${year}')">
+              <div class="year-title-group">
+                <span class="year-title">${year}</span>
+                <span class="year-count">${vids.length} ${vids.length === 1 ? 'video' : 'videos'}</span>
               </div>
-              <div class="video-title">${v.title}</div>
-              <div class="actions">
-                <button class="watch-btn ${isW ? 'is-done' : ''}" onclick="toggleWatch('${v.id}', event)">
-                  ${isW ? '✓ Watched' : 'Mark as Watched'}
-                </button>
+              <span class="year-chevron">▼</span>
+            </button>
+            <div class="year-content">
+              <div class="video-grid">
+                ${cardsHtml}
               </div>
             </div>
-          </div>
+          </section>
         `;
       }).join('');
     }
