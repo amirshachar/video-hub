@@ -9,6 +9,7 @@
       --bg: #0f172a; --card: #1e293b; --card-hover: #334155;
       --accent: #38bdf8; --text: #f8fafc; --muted: #94a3b8;
       --border: #334155; --green: #10b981; --warn: #f59e0b;
+      --short-badge: #ec4899;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); display: flex; height: 100vh; overflow: hidden; }
@@ -40,6 +41,16 @@
     /* Main Area */
     .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
     .header { padding: 14px 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+    
+    /* Format Tabs (Long Form vs Shorts) */
+    .format-tabs { display: flex; background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 3px; gap: 2px; }
+    .format-btn {
+      background: none; border: none; padding: 6px 14px; color: var(--muted); cursor: pointer;
+      font-size: 0.85rem; font-weight: 600; border-radius: 6px; transition: all 0.15s;
+    }
+    .format-btn:hover { color: var(--text); }
+    .format-btn.active { background: var(--accent); color: var(--bg); }
+
     .controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
     input[type="text"] { background: var(--card); border: 1px solid var(--border); color: var(--text); padding: 8px 12px; border-radius: 6px; font-size: 0.85rem; outline: none; }
     input[type="text"]:focus { border-color: var(--accent); }
@@ -54,7 +65,7 @@
       flex: 1;
       padding: 24px;
       overflow-y: auto;
-      display: block; /* Normal block flow to avoid flexbox crushing */
+      display: block;
     }
     
     .year-section {
@@ -101,9 +112,29 @@
     .card.watched:hover { opacity: 1; }
     .thumb { position: relative; width: 100%; padding-top: 56.25%; background: #000; }
     .thumb img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-    .watched-tag { position: absolute; top: 8px; right: 8px; background: var(--green); color: #fff; font-size: 0.7rem; font-weight: bold; padding: 2px 6px; border-radius: 4px; }
-    .lock-overlay { position: absolute; top: 8px; left: 8px; background: rgba(15,23,42,0.85); color: var(--warn); font-size: 0.75rem; font-weight: 600; padding: 3px 8px; border-radius: 6px; display: flex; align-items: center; gap: 4px; border: 1px solid var(--border); }
     
+    /* Badges on Thumbnail */
+    .watched-tag { position: absolute; top: 8px; right: 8px; background: var(--green); color: #fff; font-size: 0.7rem; font-weight: bold; padding: 2px 6px; border-radius: 4px; z-index: 2; }
+    .short-tag { position: absolute; top: 8px; left: 8px; background: var(--short-badge); color: #fff; font-size: 0.7rem; font-weight: bold; padding: 2px 6px; border-radius: 4px; z-index: 2; }
+    .lock-overlay { position: absolute; top: 8px; left: 8px; background: rgba(15,23,42,0.85); color: var(--warn); font-size: 0.75rem; font-weight: 600; padding: 3px 8px; border-radius: 6px; display: flex; align-items: center; gap: 4px; border: 1px solid var(--border); z-index: 3; }
+    
+    .duration-badge {
+      position: absolute;
+      bottom: 8px;
+      right: 8px;
+      background: rgba(15, 23, 42, 0.88);
+      color: #fff;
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 4px;
+      letter-spacing: 0.5px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+      font-variant-numeric: tabular-nums;
+      z-index: 2;
+    }
+
     .card-info { padding: 12px; display: flex; flex-direction: column; flex: 1; }
     .meta { display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--muted); margin-bottom: 6px; }
     .meta .ch-name { font-weight: 600; color: var(--accent); }
@@ -184,7 +215,15 @@
 
   <main class="main">
     <header class="header">
-      <h2 id="view-title">All Channels</h2>
+      <div style="display:flex; align-items:center; gap:16px;">
+        <h2 id="view-title">All Channels</h2>
+        <div class="format-tabs">
+          <button class="format-btn active" data-fmt="video">🎬 Long-Form</button>
+          <button class="format-btn" data-fmt="short">⚡ Shorts</button>
+          <button class="format-btn" data-fmt="all">All</button>
+        </div>
+      </div>
+
       <div class="controls">
         <input type="text" id="search" placeholder="Search videos...">
         <div class="btn-group">
@@ -246,6 +285,7 @@
     let settings = {};
     let activeCh = "all";
     let activeFilter = "all";
+    let activeFormat = "video"; // "video", "short", or "all"
     let sortDesc = true;
     let watched = new Set(JSON.parse(localStorage.getItem("watched_videos") || "[]"));
 
@@ -272,6 +312,20 @@
       }
       if (field || row.length) { row.push(field.trim()); if (row.some(f => f.length > 0)) rows.push(row); }
       return rows;
+    }
+
+    function formatDuration(d) {
+      if (!d) return "";
+      if (d.includes(":")) return d;
+      const m = d.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+      if (!m) return "";
+      const h = parseInt(m[1] || 0);
+      const mins = parseInt(m[2] || 0);
+      const s = parseInt(m[3] || 0);
+      if (h > 0) {
+        return `${h}:${mins.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+      }
+      return `${mins}:${s.toString().padStart(2, '0')}`;
     }
 
     async function loadSettings() {
@@ -347,12 +401,23 @@
             const rawDate = r[2] || "2026-01-01";
             const yearMatch = rawDate.match(/^\d{4}/);
             const year = yearMatch ? yearMatch[0] : "Earlier";
+            
+            // Column E: Type (Short / Video)
+            const rawType = (r[4] || "").trim().toLowerCase();
+            const type = rawType === "short" ? "short" : "video";
+            
+            // Column F: Duration (e.g. 14:22 or PT14M22S)
+            const rawDuration = (r[5] || "").trim();
+            const duration = formatDuration(rawDuration);
+            
             videos.push({
               channel: ch,
               title: r[0] || "Untitled",
               id: r[1],
               date: rawDate,
-              year: year
+              year: year,
+              type: type,
+              duration: duration
             });
           }
         }
@@ -376,14 +441,21 @@
     }
 
     function updateStats() {
-      document.getElementById("b-all").textContent = videos.length;
-      document.getElementById("b-veritasium").textContent = videos.filter(v => v.channel === "Veritasium").length;
-      document.getElementById("b-rober").textContent = videos.filter(v => v.channel === "Mark Rober").length;
-      document.getElementById("b-nick").textContent = videos.filter(v => v.channel === "Nick DiGiovanni").length;
-      document.getElementById("b-crunchlabs").textContent = videos.filter(v => v.channel === "CrunchLabs").length;
-      const count = videos.filter(v => watched.has(v.id)).length;
-      document.getElementById("stat-watched").textContent = `${count} / ${videos.length}`;
-      document.getElementById("stat-bar").style.width = videos.length ? `${(count / videos.length) * 100}%` : "0%";
+      const visibleVideos = videos.filter(v => {
+        if (activeFormat === "video") return v.type !== "short";
+        if (activeFormat === "short") return v.type === "short";
+        return true;
+      });
+
+      document.getElementById("b-all").textContent = visibleVideos.length;
+      document.getElementById("b-veritasium").textContent = visibleVideos.filter(v => v.channel === "Veritasium").length;
+      document.getElementById("b-rober").textContent = visibleVideos.filter(v => v.channel === "Mark Rober").length;
+      document.getElementById("b-nick").textContent = visibleVideos.filter(v => v.channel === "Nick DiGiovanni").length;
+      document.getElementById("b-crunchlabs").textContent = visibleVideos.filter(v => v.channel === "CrunchLabs").length;
+      
+      const count = visibleVideos.filter(v => watched.has(v.id)).length;
+      document.getElementById("stat-watched").textContent = `${count} / ${visibleVideos.length}`;
+      document.getElementById("stat-bar").style.width = visibleVideos.length ? `${(count / visibleVideos.length) * 100}%` : "0%";
     }
 
     function toggleWatch(id, e) {
@@ -461,6 +533,10 @@
 
       let list = videos.filter(v => {
         if (activeCh !== "all" && v.channel !== activeCh) return false;
+        
+        if (activeFormat === "video" && v.type === "short") return false;
+        if (activeFormat === "short" && v.type !== "short") return false;
+
         const isW = watched.has(v.id);
         if (activeFilter === "watched" && !isW) return false;
         if (activeFilter === "unwatched" && isW) return false;
@@ -472,7 +548,7 @@
 
       const mainWrap = document.getElementById("main-wrap");
       if (!list.length) {
-        mainWrap.innerHTML = `<div class="msg">No videos found.</div>`;
+        mainWrap.innerHTML = `<div class="msg">No ${activeFormat === "short" ? "Shorts" : "videos"} found for this selection.</div>`;
         return;
       }
 
@@ -491,12 +567,15 @@
 
         const cardsHtml = vids.map(v => {
           const isW = watched.has(v.id);
+          const isShort = v.type === "short";
           return `
             <div class="card ${isW ? 'watched' : ''}" onclick="playVideo('${v.id}', '${v.title.replace(/'/g, "\\'")}')">
               <div class="thumb">
                 <img src="https://img.youtube.com/vi/${v.id}/hqdefault.jpg" loading="lazy" alt="">
+                ${isShort ? '<div class="short-tag">⚡ Short</div>' : ''}
                 ${lock.locked ? '<div class="lock-overlay">🔒 Locked</div>' : ''}
                 ${isW ? '<div class="watched-tag">✓ Watched</div>' : ''}
+                ${v.duration ? `<div class="duration-badge">${v.duration}</div>` : ''}
               </div>
               <div class="card-info">
                 <div class="meta">
@@ -519,7 +598,7 @@
             <button class="year-header" onclick="toggleYear('${year}')">
               <div class="year-title-group">
                 <span class="year-title">${year}</span>
-                <span class="year-count">${vids.length} ${vids.length === 1 ? 'video' : 'videos'}</span>
+                <span class="year-count">${vids.length} ${vids.length === 1 ? 'item' : 'items'}</span>
               </div>
               <span class="year-chevron">▼</span>
             </button>
@@ -533,6 +612,7 @@
       }).join('');
     }
 
+    // Sidebar Channel Tabs
     document.querySelectorAll(".nav-btn").forEach(btn => {
       btn.addEventListener("click", () => {
         document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
@@ -543,6 +623,18 @@
       });
     });
 
+    // Format Switcher (Long-Form vs Shorts vs All)
+    document.querySelectorAll(".format-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".format-btn").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        activeFormat = btn.dataset.fmt;
+        updateStats();
+        render();
+      });
+    });
+
+    // Filter Buttons (All / Unwatched / Watched)
     document.querySelectorAll(".filter-btn").forEach(btn => {
       btn.addEventListener("click", () => {
         document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
