@@ -15,11 +15,11 @@
     body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); display: flex; height: 100vh; overflow: hidden; }
     
     /* Sidebar */
-    .sidebar { width: 240px; background: var(--card); border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; }
+    .sidebar { width: 250px; background: var(--card); border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; }
     .brand { padding: 20px; border-bottom: 1px solid var(--border); }
     .brand h1 { font-size: 1.1rem; }
     .brand p { font-size: 0.75rem; color: var(--muted); margin-top: 2px; }
-    .nav { padding: 12px; display: flex; flex-direction: column; gap: 4px; flex: 1; }
+    .nav { padding: 12px; display: flex; flex-direction: column; gap: 4px; flex: 1; overflow-y: auto; }
     .nav-btn {
       display: flex; justify-content: space-between; align-items: center;
       padding: 10px 12px; background: none; border: 1px solid transparent;
@@ -30,8 +30,17 @@
     .badge { font-size: 0.75rem; background: var(--border); padding: 2px 6px; border-radius: 10px; color: var(--muted); }
     .nav-btn.active .badge { background: var(--accent); color: var(--bg); font-weight: 700; }
     
-    .sidebar-footer { padding: 16px; border-top: 1px solid var(--border); font-size: 0.8rem; color: var(--muted); }
-    .progress-bar { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; margin-top: 6px; margin-bottom: 12px; }
+    /* Sidebar Footer: Schedule, Watched, and Access Status */
+    .sidebar-footer { padding: 14px 16px; border-top: 1px solid var(--border); font-size: 0.8rem; color: var(--muted); }
+    
+    .sidebar-schedule { margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+    .schedule-title { font-size: 0.75rem; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+    .schedule-list { display: flex; flex-direction: column; gap: 2px; }
+    .schedule-row { display: flex; justify-content: space-between; font-size: 0.72rem; padding: 2px 4px; border-radius: 4px; }
+    .schedule-row.today { color: var(--text); font-weight: 700; background: rgba(56, 189, 248, 0.12); }
+    .schedule-row.today .sch-day { color: var(--accent); }
+    
+    .progress-bar { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; margin-top: 6px; margin-bottom: 10px; }
     .progress-fill { height: 100%; background: var(--green); width: 0%; transition: width 0.3s; }
     .lock-status-badge { display: flex; align-items: center; justify-content: space-between; font-size: 0.75rem; color: var(--muted); }
     .status-pill { padding: 2px 8px; border-radius: 10px; font-weight: bold; }
@@ -57,16 +66,12 @@
     .btn-group { display: flex; background: var(--card); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
     .filter-btn { background: none; border: none; padding: 6px 12px; color: var(--muted); cursor: pointer; font-size: 0.8rem; }
     .filter-btn.active { background: var(--border); color: var(--text); font-weight: 600; }
-    .sort-btn, .parent-btn { background: var(--card); border: 1px solid var(--border); color: var(--text); padding: 6px 12px; border-radius: 6px; font-size: 0.8rem; cursor: pointer; }
-    .parent-btn { color: var(--accent); }
+    .sort-btn, .unlock-btn { background: var(--card); border: 1px solid var(--border); color: var(--text); padding: 6px 12px; border-radius: 6px; font-size: 0.8rem; cursor: pointer; }
+    .unlock-btn { color: var(--accent); font-weight: 600; }
+    .unlock-btn.is-unlocked { color: var(--green); border-color: rgba(16,185,129,0.3); }
 
     /* Video Wrap & Year Sections */
-    .grid-wrap {
-      flex: 1;
-      padding: 24px;
-      overflow-y: auto;
-      display: block;
-    }
+    .grid-wrap { flex: 1; padding: 24px; overflow-y: auto; display: block; }
     
     .year-section {
       background: var(--card);
@@ -100,11 +105,7 @@
     .year-section.collapsed .year-chevron { transform: rotate(-90deg); }
     .year-section.collapsed .year-content { display: none; }
     
-    .year-content {
-      padding: 20px;
-      border-top: 1px solid var(--border);
-    }
-
+    .year-content { padding: 20px; border-top: 1px solid var(--border); }
     .video-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
     .card { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; display: flex; flex-direction: column; cursor: pointer; transition: transform 0.15s, border-color 0.15s; }
     .card:hover { transform: translateY(-2px); border-color: var(--accent); }
@@ -113,26 +114,15 @@
     .thumb { position: relative; width: 100%; padding-top: 56.25%; background: #000; }
     .thumb img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
     
-    /* Badges on Thumbnail */
+    /* Badges */
     .watched-tag { position: absolute; top: 8px; right: 8px; background: var(--green); color: #fff; font-size: 0.7rem; font-weight: bold; padding: 2px 6px; border-radius: 4px; z-index: 2; }
     .short-tag { position: absolute; top: 8px; left: 8px; background: var(--short-badge); color: #fff; font-size: 0.7rem; font-weight: bold; padding: 2px 6px; border-radius: 4px; z-index: 2; }
     .lock-overlay { position: absolute; top: 8px; left: 8px; background: rgba(15,23,42,0.85); color: var(--warn); font-size: 0.75rem; font-weight: 600; padding: 3px 8px; border-radius: 6px; display: flex; align-items: center; gap: 4px; border: 1px solid var(--border); z-index: 3; }
-    
     .duration-badge {
-      position: absolute;
-      bottom: 8px;
-      right: 8px;
-      background: rgba(15, 23, 42, 0.88);
-      color: #fff;
-      font-size: 0.72rem;
-      font-weight: 700;
-      padding: 2px 6px;
-      border-radius: 4px;
-      letter-spacing: 0.5px;
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
-      font-variant-numeric: tabular-nums;
-      z-index: 2;
+      position: absolute; bottom: 8px; right: 8px; background: rgba(15, 23, 42, 0.88);
+      color: #fff; font-size: 0.72rem; font-weight: 700; padding: 2px 6px; border-radius: 4px;
+      border: 1px solid rgba(255, 255, 255, 0.15); box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+      font-variant-numeric: tabular-nums; z-index: 2;
     }
 
     .card-info { padding: 12px; display: flex; flex-direction: column; flex: 1; }
@@ -154,19 +144,35 @@
     .iframe-box { position: relative; width: 100%; padding-top: 56.25%; background: #000; }
     .iframe-box iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: none; }
     
-    /* Lock Notice Dialog */
-    .lock-dialog { max-width: 440px; padding: 28px; text-align: center; }
-    .lock-icon { font-size: 2.6rem; margin-bottom: 14px; }
-    .lock-dialog h3 { font-size: 1.25rem; margin-bottom: 10px; color: var(--text); }
-    .lock-dialog p.prompt-msg { font-size: 1.05rem; font-weight: 600; color: var(--accent); margin-bottom: 12px; line-height: 1.4; }
-    .lock-dialog p.sub-msg { font-size: 0.85rem; color: var(--muted); margin-bottom: 22px; }
-    .pin-section { border-top: 1px solid var(--border); padding-top: 18px; text-align: left; }
-    .pin-label { font-size: 0.8rem; color: var(--muted); margin-bottom: 6px; display: block; }
-    .pin-row { display: flex; gap: 8px; }
-    .pin-input { flex: 1; background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 8px 12px; border-radius: 6px; font-size: 1rem; text-align: center; letter-spacing: 4px; outline: none; }
-    .pin-submit { background: var(--border); border: none; color: var(--text); padding: 8px 14px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; cursor: pointer; }
-    .pin-submit:hover { background: var(--accent); color: var(--bg); }
-    .pin-error { color: #f87171; font-size: 0.8rem; margin-top: 6px; display: none; }
+    /* Check-In Dialog */
+    .checkin-dialog { max-width: 520px; padding: 26px 28px; text-align: center; }
+    .dialog-icon { font-size: 2.2rem; margin-bottom: 8px; }
+    .checkin-dialog h3 { font-size: 1.25rem; margin-bottom: 8px; color: var(--text); }
+    .checkin-dialog p.sub-text { font-size: 0.88rem; color: var(--muted); margin-bottom: 18px; line-height: 1.4; }
+    
+    .checklist { display: flex; flex-direction: column; gap: 10px; text-align: left; margin-bottom: 22px; }
+    .check-label {
+      display: flex; align-items: flex-start; gap: 10px; font-size: 0.85rem; line-height: 1.4;
+      color: var(--text); cursor: pointer; padding: 8px 10px; border-radius: 8px;
+      background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border); transition: background 0.15s;
+    }
+    .check-label:hover { background: rgba(255, 255, 255, 0.06); }
+    .check-label input[type="checkbox"] { margin-top: 3px; width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer; flex-shrink: 0; }
+    
+    .confirm-btn {
+      width: 100%; padding: 12px; background: var(--accent); color: var(--bg); font-weight: 700;
+      font-size: 0.95rem; border-radius: 8px; border: none; cursor: pointer; transition: opacity 0.2s;
+    }
+    .confirm-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+    .confirm-btn:not(:disabled):hover { opacity: 0.95; }
+
+    /* Outside Hours Dialog */
+    .outside-dialog { max-width: 440px; padding: 28px; text-align: center; }
+    .outside-dialog h3 { font-size: 1.25rem; margin-bottom: 8px; }
+    .outside-dialog p { font-size: 0.9rem; color: var(--muted); line-height: 1.5; margin-bottom: 20px; }
+    .outside-hours-box { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-bottom: 20px; font-size: 0.9rem; font-weight: 600; color: var(--warn); }
+    .outside-close-btn { background: var(--border); color: var(--text); border: none; padding: 10px 24px; border-radius: 6px; font-weight: 600; cursor: pointer; }
+    .outside-close-btn:hover { background: var(--card-hover); }
 
     .msg { text-align: center; padding: 60px 20px; color: var(--muted); font-size: 0.95rem; }
   </style>
@@ -201,6 +207,14 @@
       </button>
     </nav>
     <div class="sidebar-footer">
+      <!-- Allowed hours per day schedule from Google Sheet -->
+      <div class="sidebar-schedule">
+        <div class="schedule-title">📅 Viewing Hours</div>
+        <div class="schedule-list" id="schedule-list">
+          <div style="font-size:0.7rem; color:var(--muted);">Loading schedule...</div>
+        </div>
+      </div>
+
       <div style="display:flex; justify-content:space-between;">
         <span>Watched</span>
         <span id="stat-watched">0 / 0</span>
@@ -232,7 +246,7 @@
           <button class="filter-btn" data-f="watched">Watched</button>
         </div>
         <button class="sort-btn" id="sort-btn">Sort: <strong>Newest First</strong></button>
-        <button class="parent-btn" id="open-pin-btn">🔑 Parent Unlock</button>
+        <button class="unlock-btn" id="unlock-btn">🔓 Unlock</button>
       </div>
     </header>
 
@@ -254,25 +268,47 @@
     </div>
   </div>
 
-  <!-- Lock Notice & PIN Modal -->
-  <div class="modal" id="lock-modal">
-    <div class="modal-box lock-dialog">
-      <div class="lock-icon">🔒</div>
-      <h3>Playback Restricted</h3>
-      <p class="prompt-msg" id="lock-msg">Were you useful today? Homework done? Let Aba know :-)</p>
-      <p class="sub-msg" id="lock-sub">Ask Aba to unlock videos for you or enter the PIN below.</p>
+  <!-- Outside Hours Modal -->
+  <div class="modal" id="outside-modal">
+    <div class="modal-box outside-dialog">
+      <div style="font-size: 2.6rem; margin-bottom: 12px;">🔒</div>
+      <h3>Outside Viewing Hours</h3>
+      <p id="outside-msg">Video playback is currently restricted. Please check back during today's allowed viewing window.</p>
+      <div class="outside-hours-box" id="outside-hours-text">Allowed Hours: Checking...</div>
+      <button class="outside-close-btn" id="close-outside-btn">Got It</button>
+    </div>
+  </div>
+
+  <!-- Honor Check-in Modal -->
+  <div class="modal" id="checkin-modal">
+    <div class="modal-box checkin-dialog">
+      <div class="dialog-icon">🌟</div>
+      <h3>Daily Check-In</h3>
+      <p class="sub-text">Please confirm all four statements below to unlock video playback for today:</p>
       
-      <div class="pin-section">
-        <label class="pin-label">Parent PIN (1-Hour Pass):</label>
-        <div class="pin-row">
-          <input type="password" class="pin-input" id="pin-input" maxlength="8" placeholder="••••">
-          <button class="pin-submit" id="pin-submit">Unlock</button>
-        </div>
-        <div class="pin-error" id="pin-error">Incorrect PIN. Try again.</div>
+      <div class="checklist">
+        <label class="check-label">
+          <input type="checkbox" class="honor-cb" id="cb-a">
+          <span>I confirm that I do not have any school homework for today</span>
+        </label>
+        <label class="check-label">
+          <input type="checkbox" class="honor-cb" id="cb-b">
+          <span>I confirm that I have recently made progress on my science project and I now need a break</span>
+        </label>
+        <label class="check-label">
+          <input type="checkbox" class="honor-cb" id="cb-c">
+          <span>I confirm that I do not have any outstanding parents asks like dishes, shower, dinner time, etc. and that I have some free time now</span>
+        </label>
+        <label class="check-label">
+          <input type="checkbox" class="honor-cb" id="cb-d">
+          <span>I confirm that I can pause the video I'm watching if it goes over other regular evening tasks (dinner, shower, etc)</span>
+        </label>
       </div>
+
+      <button class="confirm-btn" id="confirm-unlock-btn" disabled>I Confirm — Unlock Playback</button>
       
-      <div style="margin-top: 16px;">
-        <button class="watch-btn" id="close-lock-btn">Close</button>
+      <div style="margin-top: 14px;">
+        <button class="watch-btn" id="close-checkin-btn">Cancel</button>
       </div>
     </div>
   </div>
@@ -280,16 +316,17 @@
   <script>
     const SHEET_ID = "1MoK36TeB2cJdvPOPASvOnBX_XRwKcYeuiwzxnU2hMcY";
     const CHANNELS = ["Veritasium", "Mark Rober", "Nick DiGiovanni", "CrunchLabs"];
+    const DAYS_ORDER = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
     let videos = [];
     let settings = {};
     let activeCh = "all";
     let activeFilter = "all";
-    let activeFormat = "video"; // "video", "short", or "all"
+    let activeFormat = "video";
     let sortDesc = true;
     let watched = new Set(JSON.parse(localStorage.getItem("watched_videos") || "[]"));
+    let pendingVideo = null;
 
-    // Default open year: current calendar year.
     const currentCalendarYear = new Date().getFullYear().toString();
     let openYears = new Set([currentCalendarYear]);
 
@@ -346,23 +383,46 @@
       }
     }
 
+    function renderScheduleList() {
+      const scheduleContainer = document.getElementById("schedule-list");
+      const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+      const todayName = daysOfWeek[new Date().getDay()];
+
+      let html = "";
+      DAYS_ORDER.forEach(day => {
+        const isToday = (day === todayName);
+        const hours = settings[day] || "OFF";
+        const shortDay = day.substring(0, 3);
+        html += `
+          <div class="schedule-row ${isToday ? 'today' : ''}">
+            <span class="sch-day">${isToday ? '▶ ' : ''}${shortDay}</span>
+            <span class="sch-hours">${hours}</span>
+          </div>
+        `;
+      });
+      scheduleContainer.innerHTML = html;
+    }
+
     function checkLockStatus() {
+      // 1. Parent override bypass
       const unlockUntil = localStorage.getItem("parent_unlock_until");
       if (unlockUntil && Date.now() < parseInt(unlockUntil)) {
-        return { locked: false, reason: "Parent Override Active" };
+        return { locked: false, withinHours: true };
       }
 
+      // 2. Master status
       const master = (settings["Master Status"] || "SCHEDULED").toUpperCase();
-      if (master === "UNLOCKED") return { locked: false };
-      if (master === "LOCKED") return { locked: true, reason: settings["Lock Message"] || "Were you useful today? Homework done? Let Aba know :-)" };
+      if (master === "UNLOCKED") return { locked: false, withinHours: true };
+      if (master === "LOCKED") return { locked: true, withinHours: false, reason: settings["Lock Message"] || "Playback locked by Aba." };
 
+      // 3. Time window check
       const now = new Date();
       const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
       const dayName = days[now.getDay()];
       const timeWindow = settings[dayName];
 
       if (!timeWindow || timeWindow.toUpperCase() === "OFF") {
-        return { locked: true, reason: `No viewing hours scheduled for ${dayName}.` };
+        return { locked: true, withinHours: false, reason: `No viewing hours scheduled for ${dayName}.`, timeWindow: "OFF" };
       }
 
       const parts = timeWindow.split("-");
@@ -373,18 +433,24 @@
         const startMins = startH * 60 + (startM || 0);
         const endMins = endH * 60 + (endM || 0);
 
-        if (curMins >= startMins && curMins < endMins) {
-          return { locked: false };
-        } else {
-          return { locked: true, reason: `Viewing hours for ${dayName} are ${parts[0]} - ${parts[1]}.` };
+        if (curMins < startMins || curMins >= endMins) {
+          return { locked: true, withinHours: false, reason: `Viewing hours for ${dayName} are ${parts[0]} - ${parts[1]}. Please come back during allowed hours!`, timeWindow };
         }
       }
 
-      return { locked: false };
+      // 4. Within hours: check if child completed today's honor check-in
+      const honorDate = localStorage.getItem("honor_unlocked_date");
+      const todayDateStr = now.toDateString();
+      if (honorDate === todayDateStr) {
+        return { locked: false, withinHours: true };
+      }
+
+      return { locked: true, withinHours: true, needsCheckin: true, timeWindow: timeWindow || "" };
     }
 
     async function loadData() {
       await loadSettings();
+      renderScheduleList();
       updateAccessPill();
 
       videos = [];
@@ -401,12 +467,8 @@
             const rawDate = r[2] || "2026-01-01";
             const yearMatch = rawDate.match(/^\d{4}/);
             const year = yearMatch ? yearMatch[0] : "Earlier";
-            
-            // Column E: Type (Short / Video)
             const rawType = (r[4] || "").trim().toLowerCase();
             const type = rawType === "short" ? "short" : "video";
-            
-            // Column F: Duration (e.g. 14:22 or PT14M22S)
             const rawDuration = (r[5] || "").trim();
             const duration = formatDuration(rawDuration);
             
@@ -431,12 +493,18 @@
     function updateAccessPill() {
       const lock = checkLockStatus();
       const pill = document.getElementById("access-pill");
+      const unlockBtn = document.getElementById("unlock-btn");
+
       if (lock.locked) {
-        pill.textContent = "Locked 🔒";
+        pill.textContent = lock.withinHours ? "Check-in 🔒" : "Locked 🔒";
         pill.className = "status-pill locked";
+        unlockBtn.textContent = "🔓 Unlock";
+        unlockBtn.classList.remove("is-unlocked");
       } else {
-        pill.textContent = "Open ✓";
+        pill.textContent = "Unlocked ✓";
         pill.className = "status-pill open";
+        unlockBtn.textContent = "✓ Unlocked";
+        unlockBtn.classList.add("is-unlocked");
       }
     }
 
@@ -469,7 +537,8 @@
     function playVideo(id, title) {
       const lock = checkLockStatus();
       if (lock.locked) {
-        openLockModal(lock.reason);
+        pendingVideo = { id, title };
+        handleLockClick(lock);
         return;
       }
 
@@ -484,32 +553,40 @@
       }
     }
 
-    function openLockModal(subText) {
-      const modal = document.getElementById("lock-modal");
-      const customPrompt = settings["Lock Message"] || "Were you useful today? Homework done? Let Aba know :-)";
-      document.getElementById("lock-msg").textContent = customPrompt;
-      if (subText && subText !== customPrompt) {
-        document.getElementById("lock-sub").textContent = subText + " Ask Aba to unlock.";
+    function handleLockClick(lock) {
+      if (!lock.withinHours) {
+        // Outside allowed hours
+        const outsideModal = document.getElementById("outside-modal");
+        document.getElementById("outside-msg").textContent = lock.reason || "Playback is locked outside allowed viewing hours.";
+        document.getElementById("outside-hours-text").textContent = `Today's Viewing Hours: ${lock.timeWindow || "Closed"}`;
+        outsideModal.classList.add("active");
       } else {
-        document.getElementById("lock-sub").textContent = "Ask Aba to unlock videos for you or enter the PIN below.";
+        // Within hours: open Honor Check-in modal
+        openCheckinModal();
       }
+    }
 
-      document.getElementById("pin-error").style.display = "none";
-      document.getElementById("pin-input").value = "";
+    function openCheckinModal() {
+      const modal = document.getElementById("checkin-modal");
+      document.querySelectorAll(".honor-cb").forEach(cb => cb.checked = false);
+      document.getElementById("confirm-unlock-btn").disabled = true;
       modal.classList.add("active");
     }
 
-    function submitPin() {
-      const input = document.getElementById("pin-input").value.trim();
-      const validPin = (settings["Parent PIN"] || "1234").trim();
+    function validateCheckboxes() {
+      const allChecked = Array.from(document.querySelectorAll(".honor-cb")).every(cb => cb.checked);
+      document.getElementById("confirm-unlock-btn").disabled = !allChecked;
+    }
 
-      if (input === validPin) {
-        localStorage.setItem("parent_unlock_until", Date.now() + 60 * 60 * 1000);
-        document.getElementById("lock-modal").classList.remove("active");
-        updateAccessPill();
-        render();
-      } else {
-        document.getElementById("pin-error").style.display = "block";
+    function submitCheckin() {
+      localStorage.setItem("honor_unlocked_date", new Date().toDateString());
+      document.getElementById("checkin-modal").classList.remove("active");
+      updateAccessPill();
+      render();
+
+      if (pendingVideo) {
+        playVideo(pendingVideo.id, pendingVideo.title);
+        pendingVideo = null;
       }
     }
 
@@ -533,7 +610,6 @@
 
       let list = videos.filter(v => {
         if (activeCh !== "all" && v.channel !== activeCh) return false;
-        
         if (activeFormat === "video" && v.type === "short") return false;
         if (activeFormat === "short" && v.type !== "short") return false;
 
@@ -552,7 +628,6 @@
         return;
       }
 
-      // Group by year
       const yearGroups = {};
       list.forEach(v => {
         if (!yearGroups[v.year]) yearGroups[v.year] = [];
@@ -623,7 +698,7 @@
       });
     });
 
-    // Format Switcher (Long-Form vs Shorts vs All)
+    // Format Switcher
     document.querySelectorAll(".format-btn").forEach(btn => {
       btn.addEventListener("click", () => {
         document.querySelectorAll(".format-btn").forEach(b => b.classList.remove("active"));
@@ -634,7 +709,7 @@
       });
     });
 
-    // Filter Buttons (All / Unwatched / Watched)
+    // Filter Buttons
     document.querySelectorAll(".filter-btn").forEach(btn => {
       btn.addEventListener("click", () => {
         document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
@@ -651,15 +726,47 @@
       render();
     });
 
-    document.getElementById("open-pin-btn").addEventListener("click", () => openLockModal());
-    document.getElementById("pin-submit").addEventListener("click", submitPin);
-    document.getElementById("pin-input").addEventListener("keydown", (e) => { if (e.key === "Enter") submitPin(); });
-    document.getElementById("close-lock-btn").addEventListener("click", () => document.getElementById("lock-modal").classList.remove("active"));
+    // Unlock Button in Header
+    document.getElementById("unlock-btn").addEventListener("click", () => {
+      const lock = checkLockStatus();
+      if (!lock.locked) {
+        alert("Playback is already unlocked for today! Enjoy watching.");
+        return;
+      }
+      handleLockClick(lock);
+    });
+
+    // Checkbox Listeners
+    document.querySelectorAll(".honor-cb").forEach(cb => {
+      cb.addEventListener("change", validateCheckboxes);
+    });
+
+    document.getElementById("confirm-unlock-btn").addEventListener("click", submitCheckin);
+
+    // Modal Close Listeners
+    document.getElementById("close-checkin-btn").addEventListener("click", () => {
+      document.getElementById("checkin-modal").classList.remove("active");
+      pendingVideo = null;
+    });
+
+    document.getElementById("close-outside-btn").addEventListener("click", () => {
+      document.getElementById("outside-modal").classList.remove("active");
+      pendingVideo = null;
+    });
 
     document.getElementById("m-close").addEventListener("click", closeModal);
     document.getElementById("modal").addEventListener("click", e => { if (e.target.id === "modal") closeModal(); });
-    document.getElementById("lock-modal").addEventListener("click", e => { if (e.target.id === "lock-modal") document.getElementById("lock-modal").classList.remove("active"); });
-    document.addEventListener("keydown", e => { if (e.key === "Escape") { closeModal(); document.getElementById("lock-modal").classList.remove("active"); } });
+    document.getElementById("checkin-modal").addEventListener("click", e => { if (e.target.id === "checkin-modal") document.getElementById("checkin-modal").classList.remove("active"); });
+    document.getElementById("outside-modal").addEventListener("click", e => { if (e.target.id === "outside-modal") document.getElementById("outside-modal").classList.remove("active"); });
+
+    document.addEventListener("keydown", e => {
+      if (e.key === "Escape") {
+        closeModal();
+        document.getElementById("checkin-modal").classList.remove("active");
+        document.getElementById("outside-modal").classList.remove("active");
+        pendingVideo = null;
+      }
+    });
 
     loadData();
   </script>
