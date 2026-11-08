@@ -205,9 +205,16 @@
         <span>⚙️ CrunchLabs</span>
         <span class="badge" id="b-crunchlabs">0</span>
       </button>
+      <button class="nav-btn" data-ch="SpaceX">
+        <span>🚀 SpaceX</span>
+        <span class="badge" id="b-spacex">0</span>
+      </button>
+      <button class="nav-btn" data-ch="InGenius">
+        <span>💡 InGenius</span>
+        <span class="badge" id="b-ingenius">0</span>
+      </button>
     </nav>
     <div class="sidebar-footer">
-      <!-- Allowed hours per day schedule from Google Sheet -->
       <div class="sidebar-schedule">
         <div class="schedule-title">📅 Viewing Hours</div>
         <div class="schedule-list" id="schedule-list">
@@ -315,7 +322,7 @@
 
   <script>
     const SHEET_ID = "1MoK36TeB2cJdvPOPASvOnBX_XRwKcYeuiwzxnU2hMcY";
-    const CHANNELS = ["Veritasium", "Mark Rober", "Nick DiGiovanni", "CrunchLabs"];
+    const CHANNELS = ["Veritasium", "Mark Rober", "Nick DiGiovanni", "CrunchLabs", "SpaceX", "InGenius"];
     const DAYS_ORDER = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
     let videos = [];
@@ -404,18 +411,15 @@
     }
 
     function checkLockStatus() {
-      // 1. Parent override bypass
       const unlockUntil = localStorage.getItem("parent_unlock_until");
       if (unlockUntil && Date.now() < parseInt(unlockUntil)) {
         return { locked: false, withinHours: true };
       }
 
-      // 2. Master status
       const master = (settings["Master Status"] || "SCHEDULED").toUpperCase();
       if (master === "UNLOCKED") return { locked: false, withinHours: true };
       if (master === "LOCKED") return { locked: true, withinHours: false, reason: settings["Lock Message"] || "Playback locked by Aba." };
 
-      // 3. Time window check
       const now = new Date();
       const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
       const dayName = days[now.getDay()];
@@ -438,7 +442,6 @@
         }
       }
 
-      // 4. Within hours: check if child completed today's honor check-in
       const honorDate = localStorage.getItem("honor_unlocked_date");
       const todayDateStr = now.toDateString();
       if (honorDate === todayDateStr) {
@@ -520,6 +523,8 @@
       document.getElementById("b-rober").textContent = visibleVideos.filter(v => v.channel === "Mark Rober").length;
       document.getElementById("b-nick").textContent = visibleVideos.filter(v => v.channel === "Nick DiGiovanni").length;
       document.getElementById("b-crunchlabs").textContent = visibleVideos.filter(v => v.channel === "CrunchLabs").length;
+      document.getElementById("b-spacex").textContent = visibleVideos.filter(v => v.channel === "SpaceX").length;
+      document.getElementById("b-ingenius").textContent = visibleVideos.filter(v => v.channel === "InGenius").length;
       
       const count = visibleVideos.filter(v => watched.has(v.id)).length;
       document.getElementById("stat-watched").textContent = `${count} / ${visibleVideos.length}`;
@@ -555,13 +560,11 @@
 
     function handleLockClick(lock) {
       if (!lock.withinHours) {
-        // Outside allowed hours
         const outsideModal = document.getElementById("outside-modal");
         document.getElementById("outside-msg").textContent = lock.reason || "Playback is locked outside allowed viewing hours.";
         document.getElementById("outside-hours-text").textContent = `Today's Viewing Hours: ${lock.timeWindow || "Closed"}`;
         outsideModal.classList.add("active");
       } else {
-        // Within hours: open Honor Check-in modal
         openCheckinModal();
       }
     }
@@ -687,7 +690,6 @@
       }).join('');
     }
 
-    // Sidebar Channel Tabs
     document.querySelectorAll(".nav-btn").forEach(btn => {
       btn.addEventListener("click", () => {
         document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
@@ -698,7 +700,6 @@
       });
     });
 
-    // Format Switcher
     document.querySelectorAll(".format-btn").forEach(btn => {
       btn.addEventListener("click", () => {
         document.querySelectorAll(".format-btn").forEach(b => b.classList.remove("active"));
@@ -709,7 +710,6 @@
       });
     });
 
-    // Filter Buttons
     document.querySelectorAll(".filter-btn").forEach(btn => {
       btn.addEventListener("click", () => {
         document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
@@ -726,7 +726,6 @@
       render();
     });
 
-    // Unlock Button in Header
     document.getElementById("unlock-btn").addEventListener("click", () => {
       const lock = checkLockStatus();
       if (!lock.locked) {
@@ -736,14 +735,12 @@
       handleLockClick(lock);
     });
 
-    // Checkbox Listeners
     document.querySelectorAll(".honor-cb").forEach(cb => {
       cb.addEventListener("change", validateCheckboxes);
     });
 
     document.getElementById("confirm-unlock-btn").addEventListener("click", submitCheckin);
 
-    // Modal Close Listeners
     document.getElementById("close-checkin-btn").addEventListener("click", () => {
       document.getElementById("checkin-modal").classList.remove("active");
       pendingVideo = null;
