@@ -6,9 +6,15 @@
   <title>Video Portal</title>
   <style>
     :root {
-      --bg: #0f172a; --card: #1e293b; --card-hover: #334155;
-      --accent: #38bdf8; --text: #f8fafc; --muted: #94a3b8;
-      --border: #334155; --green: #10b981; --warn: #f59e0b;
+      --bg: #141416;
+      --card: #202024;
+      --card-hover: #2c2c32;
+      --accent: #38bdf8;
+      --text: #f4f4f5;
+      --muted: #a1a1aa;
+      --border: #2e2e34;
+      --green: #10b981;
+      --warn: #f59e0b;
       --short-badge: #ec4899;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -26,9 +32,9 @@
       border-radius: 6px; color: var(--muted); font-size: 0.9rem; cursor: pointer; text-align: left;
     }
     .nav-btn:hover { background: rgba(255,255,255,0.05); color: var(--text); }
-    .nav-btn.active { background: rgba(56,189,248,0.15); border-color: rgba(56,189,248,0.3); color: var(--accent); font-weight: 600; }
+    .nav-btn.active { background: rgba(56,189,248,0.12); border-color: rgba(56,189,248,0.3); color: var(--accent); font-weight: 600; }
     .badge { font-size: 0.75rem; background: var(--border); padding: 2px 6px; border-radius: 10px; color: var(--muted); }
-    .nav-btn.active .badge { background: var(--accent); color: var(--bg); font-weight: 700; }
+    .nav-btn.active .badge { background: var(--accent); color: #000; font-weight: 700; }
     
     /* Sidebar Footer: Schedule, Watched, and Access Status */
     .sidebar-footer { padding: 14px 16px; border-top: 1px solid var(--border); font-size: 0.8rem; color: var(--muted); }
@@ -37,15 +43,15 @@
     .schedule-title { font-size: 0.75rem; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
     .schedule-list { display: flex; flex-direction: column; gap: 2px; }
     .schedule-row { display: flex; justify-content: space-between; font-size: 0.72rem; padding: 2px 4px; border-radius: 4px; }
-    .schedule-row.today { color: var(--text); font-weight: 700; background: rgba(56, 189, 248, 0.12); }
+    .schedule-row.today { color: var(--text); font-weight: 700; background: rgba(255, 255, 255, 0.06); }
     .schedule-row.today .sch-day { color: var(--accent); }
     
     .progress-bar { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; margin-top: 6px; margin-bottom: 10px; }
     .progress-fill { height: 100%; background: var(--green); width: 0%; transition: width 0.3s; }
     .lock-status-badge { display: flex; align-items: center; justify-content: space-between; font-size: 0.75rem; color: var(--muted); }
     .status-pill { padding: 2px 8px; border-radius: 10px; font-weight: bold; }
-    .status-pill.open { background: rgba(16,185,129,0.2); color: var(--green); }
-    .status-pill.locked { background: rgba(245,158,11,0.2); color: var(--warn); }
+    .status-pill.open { background: rgba(16,185,129,0.18); color: var(--green); }
+    .status-pill.locked { background: rgba(245,158,11,0.18); color: var(--warn); }
 
     /* Main Area */
     .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
@@ -58,7 +64,7 @@
       font-size: 0.85rem; font-weight: 600; border-radius: 6px; transition: all 0.15s;
     }
     .format-btn:hover { color: var(--text); }
-    .format-btn.active { background: var(--accent); color: var(--bg); }
+    .format-btn.active { background: var(--accent); color: #000; }
 
     .controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
     input[type="text"] { background: var(--card); border: 1px solid var(--border); color: var(--text); padding: 8px 12px; border-radius: 6px; font-size: 0.85rem; outline: none; }
@@ -88,7 +94,7 @@
       justify-content: space-between;
       align-items: center;
       padding: 14px 20px;
-      background: rgba(255, 255, 255, 0.03);
+      background: rgba(255, 255, 255, 0.02);
       border: none;
       color: var(--text);
       cursor: pointer;
@@ -97,7 +103,7 @@
       transition: background 0.15s;
       user-select: none;
     }
-    .year-header:hover { background: rgba(255, 255, 255, 0.07); }
+    .year-header:hover { background: rgba(255, 255, 255, 0.05); }
     .year-title-group { display: flex; align-items: center; gap: 10px; }
     .year-title { color: var(--accent); font-size: 1.15rem; }
     .year-count { font-size: 0.8rem; font-weight: 500; color: var(--muted); background: var(--border); padding: 3px 10px; border-radius: 12px; }
@@ -108,7 +114,7 @@
     .year-content { padding: 20px; border-top: 1px solid var(--border); }
     .video-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
     .card { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; display: flex; flex-direction: column; cursor: pointer; transition: transform 0.15s, border-color 0.15s; }
-    .card:hover { transform: translateY(-2px); border-color: var(--accent); }
+    .card:hover { transform: translateY(-2px); border-color: rgba(56,189,248,0.5); }
     .card.watched { opacity: 0.7; }
     .card.watched:hover { opacity: 1; }
     .thumb { position: relative; width: 100%; padding-top: 56.25%; background: #000; }
@@ -117,9 +123,9 @@
     /* Badges */
     .watched-tag { position: absolute; top: 8px; right: 8px; background: var(--green); color: #fff; font-size: 0.7rem; font-weight: bold; padding: 2px 6px; border-radius: 4px; z-index: 2; }
     .short-tag { position: absolute; top: 8px; left: 8px; background: var(--short-badge); color: #fff; font-size: 0.7rem; font-weight: bold; padding: 2px 6px; border-radius: 4px; z-index: 2; }
-    .lock-overlay { position: absolute; top: 8px; left: 8px; background: rgba(15,23,42,0.85); color: var(--warn); font-size: 0.75rem; font-weight: 600; padding: 3px 8px; border-radius: 6px; display: flex; align-items: center; gap: 4px; border: 1px solid var(--border); z-index: 3; }
+    .lock-overlay { position: absolute; top: 8px; left: 8px; background: rgba(20,20,22,0.9); color: var(--warn); font-size: 0.75rem; font-weight: 600; padding: 3px 8px; border-radius: 6px; display: flex; align-items: center; gap: 4px; border: 1px solid var(--border); z-index: 3; }
     .duration-badge {
-      position: absolute; bottom: 8px; right: 8px; background: rgba(15, 23, 42, 0.88);
+      position: absolute; bottom: 8px; right: 8px; background: rgba(18, 18, 20, 0.92);
       color: #fff; font-size: 0.72rem; font-weight: 700; padding: 2px 6px; border-radius: 4px;
       border: 1px solid rgba(255, 255, 255, 0.15); box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
       font-variant-numeric: tabular-nums; z-index: 2;
@@ -160,7 +166,7 @@
     .check-label input[type="checkbox"] { margin-top: 3px; width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer; flex-shrink: 0; }
     
     .confirm-btn {
-      width: 100%; padding: 12px; background: var(--accent); color: var(--bg); font-weight: 700;
+      width: 100%; padding: 12px; background: var(--accent); color: #000; font-weight: 700;
       font-size: 0.95rem; border-radius: 8px; border: none; cursor: pointer; transition: opacity 0.2s;
     }
     .confirm-btn:disabled { opacity: 0.35; cursor: not-allowed; }
